@@ -8,7 +8,13 @@ const app = express();
 app.use(express.json());
 app.use(express.static(join(__dirname, '..')));
 
+app.get('/', (req, res) => {
+    res.redirect('/home.html');
+});
+
 const PORT = process.env.PORT || 3002;
 app.listen(PORT, () => {
     console.log(`Directory running at http://localhost:${PORT}`);
 });
+
+
