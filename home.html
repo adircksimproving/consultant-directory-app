@@ -28,6 +28,40 @@
             <div class="welcome-title">Consultant Directory</div>
             <p class="welcome-sub">Find and explore Improving consultants.</p>
         </div>
+
+        <div class="directory">
+            <div class="directory-header">
+                <span>Name</span>
+                <span>City</span>
+                <span>Role</span>
+            </div>
+            <div id="consultant-list" class="directory-list"></div>
+        </div>
     </div>
+
+    <script>
+        async function loadConsultants() {
+            const list = document.getElementById('consultant-list');
+            const consultants = await fetch('/api/consultants').then(r => r.json());
+
+            for (const consultant of consultants) {
+                const row = document.createElement('div');
+                row.className = 'directory-row';
+                row.innerHTML = `
+                    <span class="directory-name">${consultant.name}</span>
+                    <span class="directory-city">${consultant.city}</span>
+                    <span class="directory-role">${consultant.role_type}</span>
+                `;
+                row.addEventListener('click', () => openContactCard(consultant));
+                list.appendChild(row);
+            }
+        }
+
+        function openContactCard(consultant) {
+            // contact card — tracked in future issue
+        }
+
+        loadConsultants();
+    </script>
 </body>
 </html>
