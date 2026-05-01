@@ -1,7 +1,7 @@
-# Project: [Portal]
+# Project: [Consultant Directory App]
 
 ## Overview
-Portal is an app used to access other apps. Nothing crazy. Until auth and roles get introduced, then it's going to be rough.
+This app allows Delivery Managers to search for consultants across the organization and find their professional info, contact information, and other info that idk yet.
 
 ## Internal App Ecosystem
 
