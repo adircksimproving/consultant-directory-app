@@ -29,6 +29,18 @@
             <p class="welcome-sub">Find and explore Improving consultants.</p>
         </div>
 
+        <div class="directory-controls">
+            <input type="text" id="search-input" class="search-input" placeholder="Search by name...">
+            <div class="filter-group">
+                <select id="filter-location" class="filter-select">
+                    <option value="">All Locations</option>
+                </select>
+                <select id="filter-title" class="filter-select">
+                    <option value="">All Titles</option>
+                </select>
+            </div>
+        </div>
+
         <div class="directory">
             <div class="directory-header">
                 <span>Name</span>
@@ -41,6 +53,7 @@
 
     <script>
         let activeRow = null;
+        let rowIndex = [];
 
         function getInitials(name) {
             const parts = name.trim().split(' ');
@@ -54,9 +67,49 @@
             return colors[Math.abs(hash) % colors.length];
         }
 
+        function applyFilters() {
+            const query = document.getElementById('search-input').value.trim().toLowerCase();
+            const location = document.getElementById('filter-location').value;
+            const title = document.getElementById('filter-title').value;
+
+            if (activeRow) {
+                activeRow.classList.remove('is-open');
+                activeRow.closest('.directory-row-wrap').querySelector('.directory-row').classList.remove('is-active');
+                activeRow = null;
+            }
+
+            for (const { consultant, wrap } of rowIndex) {
+                const nameLower = consultant.name.toLowerCase();
+                const consultantLocation = `${consultant.city}, ${consultant.state}`;
+                const matchesSearch = !query || nameLower.includes(query);
+                const matchesLocation = !location || consultantLocation === location;
+                const matchesTitle = !title || consultant.title === title;
+                wrap.style.display = matchesSearch && matchesLocation && matchesTitle ? '' : 'none';
+            }
+        }
+
         async function loadConsultants() {
             const list = document.getElementById('consultant-list');
             const consultants = await fetch('/api/consultants').then(r => r.json());
+
+            const locations = [...new Set(consultants.map(c => `${c.city}, ${c.state}`))].sort();
+            const titles = [...new Set(consultants.map(c => c.title))].sort();
+
+            const locationSelect = document.getElementById('filter-location');
+            for (const loc of locations) {
+                const opt = document.createElement('option');
+                opt.value = loc;
+                opt.textContent = loc;
+                locationSelect.appendChild(opt);
+            }
+
+            const titleSelect = document.getElementById('filter-title');
+            for (const t of titles) {
+                const opt = document.createElement('option');
+                opt.value = t;
+                opt.textContent = t;
+                titleSelect.appendChild(opt);
+            }
 
             for (const consultant of consultants) {
                 const row = document.createElement('div');
@@ -114,7 +167,13 @@
                 wrap.appendChild(row);
                 wrap.appendChild(detail);
                 list.appendChild(wrap);
+
+                rowIndex.push({ consultant, wrap });
             }
+
+            document.getElementById('search-input').addEventListener('input', applyFilters);
+            document.getElementById('filter-location').addEventListener('change', applyFilters);
+            document.getElementById('filter-title').addEventListener('change', applyFilters);
         }
 
         loadConsultants();
