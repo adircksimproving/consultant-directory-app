@@ -11,7 +11,7 @@
     <div class="container">
         <nav class="nav">
             <div class="nav-brand">
-                <img src="assets/improving-logo-simple.png" alt="Improving" class="nav-brand-logo">
+                <a id="nav-logo-link" href="#"><img src="assets/improving-logo-simple.png" alt="Improving" class="nav-brand-logo"></a>
                 <span class="nav-brand-sep"></span>
                 <span class="nav-brand-app">Directory</span>
             </div>
@@ -20,7 +20,7 @@
                     <div class="btn-user-avatar">AD</div>
                     Austin Dircks
                 </a>
-                <a href="http://localhost:3001" class="btn-signout">Sign out</a>
+                <a id="nav-signout-link" href="#" class="btn-signout">Sign out</a>
             </div>
         </nav>
 
@@ -52,6 +52,12 @@
     </div>
 
     <script>
+        const PORTAL_BASE = window.location.hostname === 'localhost'
+            ? 'http://localhost:3001'
+            : 'https://portal-production-2c38.up.railway.app';
+        document.getElementById('nav-logo-link').href = PORTAL_BASE + '/portal.html';
+        document.getElementById('nav-signout-link').href = PORTAL_BASE + '/';
+
         let activeRow = null;
         let rowIndex = [];
 
@@ -90,12 +96,20 @@
 
         async function loadConsultants() {
             const list = document.getElementById('consultant-list');
+            list.innerHTML = '';
+            rowIndex = [];
+            activeRow = null;
+
+            const locationSelect = document.getElementById('filter-location');
+            const titleSelect = document.getElementById('filter-title');
+            locationSelect.innerHTML = '<option value="">All Locations</option>';
+            titleSelect.innerHTML = '<option value="">All Titles</option>';
+
             const consultants = await fetch('/api/consultants').then(r => r.json());
 
             const locations = [...new Set(consultants.map(c => `${c.city}, ${c.state}`))].sort();
             const titles = [...new Set(consultants.map(c => c.title))].sort();
 
-            const locationSelect = document.getElementById('filter-location');
             for (const loc of locations) {
                 const opt = document.createElement('option');
                 opt.value = loc;
@@ -103,7 +117,6 @@
                 locationSelect.appendChild(opt);
             }
 
-            const titleSelect = document.getElementById('filter-title');
             for (const t of titles) {
                 const opt = document.createElement('option');
                 opt.value = t;
@@ -170,11 +183,17 @@
 
                 rowIndex.push({ consultant, wrap });
             }
-
-            document.getElementById('search-input').addEventListener('input', applyFilters);
-            document.getElementById('filter-location').addEventListener('change', applyFilters);
-            document.getElementById('filter-title').addEventListener('change', applyFilters);
         }
+
+        document.getElementById('search-input').addEventListener('input', applyFilters);
+        document.getElementById('filter-location').addEventListener('change', applyFilters);
+        document.getElementById('filter-title').addEventListener('change', applyFilters);
+
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted) {
+                loadConsultants();
+            }
+        });
 
         loadConsultants();
     </script>
