@@ -84,6 +84,11 @@ Key files to read before making broad changes:
 
 ---
 
+## Hosting
+This app is hosted on Railway. Production URL: https://revenue-analysis-app-production.up.railway.app/
+
+---
+
 ## Notes for Claude
 
 - When in doubt about how auth or routing works, read portal first.
