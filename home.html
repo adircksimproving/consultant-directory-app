@@ -32,14 +32,28 @@
         <div class="directory">
             <div class="directory-header">
                 <span>Name</span>
-                <span>City</span>
-                <span>Role</span>
+                <span>Location</span>
+                <span>Title</span>
             </div>
             <div id="consultant-list" class="directory-list"></div>
         </div>
     </div>
 
     <script>
+        let activeRow = null;
+
+        function getInitials(name) {
+            const parts = name.trim().split(' ');
+            return (parts[0][0] + (parts[parts.length - 1][0] || '')).toUpperCase();
+        }
+
+        function getAvatarColor(name) {
+            const colors = ['#005596', '#0077cc', '#2e7d32', '#6a1b9a', '#c62828', '#e65100', '#00695c', '#1565c0'];
+            let hash = 0;
+            for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+            return colors[Math.abs(hash) % colors.length];
+        }
+
         async function loadConsultants() {
             const list = document.getElementById('consultant-list');
             const consultants = await fetch('/api/consultants').then(r => r.json());
@@ -47,18 +61,60 @@
             for (const consultant of consultants) {
                 const row = document.createElement('div');
                 row.className = 'directory-row';
+                row.dataset.id = consultant.id;
                 row.innerHTML = `
                     <span class="directory-name">${consultant.name}</span>
-                    <span class="directory-city">${consultant.city}</span>
-                    <span class="directory-role">${consultant.role_type}</span>
+                    <span class="directory-city">${consultant.city}, ${consultant.state}</span>
+                    <span class="directory-role">${consultant.title}</span>
                 `;
-                row.addEventListener('click', () => openContactCard(consultant));
-                list.appendChild(row);
-            }
-        }
 
-        function openContactCard(consultant) {
-            // contact card — tracked in future issue
+                const detail = document.createElement('div');
+                detail.className = 'directory-detail';
+                detail.innerHTML = `
+                    <div class="detail-avatar" style="background:${getAvatarColor(consultant.name)}">${getInitials(consultant.name)}</div>
+                    <div class="detail-info">
+                        <div class="detail-name">${consultant.name}</div>
+                        <div class="detail-title">${consultant.title}</div>
+                        <div class="detail-fields">
+                            <div class="detail-field">
+                                <span class="detail-label">Role</span>
+                                <span class="detail-value">${consultant.role_type}</span>
+                            </div>
+                            <div class="detail-field">
+                                <span class="detail-label">Location</span>
+                                <span class="detail-value">${consultant.city}, ${consultant.state}</span>
+                            </div>
+                            <div class="detail-field">
+                                <span class="detail-label">Phone</span>
+                                <span class="detail-value">${consultant.phone}</span>
+                            </div>
+                            <div class="detail-field">
+                                <span class="detail-label">Client History</span>
+                                <span class="detail-value detail-empty">None on record</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                row.addEventListener('click', () => {
+                    const isOpen = detail.classList.contains('is-open');
+
+                    if (activeRow && activeRow !== detail) {
+                        activeRow.classList.remove('is-open');
+                        activeRow.closest('.directory-row-wrap').querySelector('.directory-row').classList.remove('is-active');
+                    }
+
+                    detail.classList.toggle('is-open', !isOpen);
+                    row.classList.toggle('is-active', !isOpen);
+                    activeRow = isOpen ? null : detail;
+                });
+
+                const wrap = document.createElement('div');
+                wrap.className = 'directory-row-wrap';
+                wrap.appendChild(row);
+                wrap.appendChild(detail);
+                list.appendChild(wrap);
+            }
         }
 
         loadConsultants();

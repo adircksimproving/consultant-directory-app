@@ -113,7 +113,11 @@ h1 {
     transition: background 0.1s;
 }
 
-.directory-row:last-child {
+.directory-row-wrap:last-child .directory-row:not(.is-active) {
+    border-bottom: none;
+}
+
+.directory-row-wrap:last-child .directory-detail {
     border-bottom: none;
 }
 
@@ -132,4 +136,92 @@ h1 {
 
 .directory-role {
     color: #374151;
+}
+
+.directory-row.is-active {
+    background: #f0f6ff;
+    border-bottom-color: transparent;
+}
+
+.directory-row.is-active .directory-name {
+    color: #005596;
+}
+
+/* Expanded detail panel */
+
+.directory-detail {
+    display: none;
+    align-items: flex-start;
+}
+
+.directory-detail.is-open {
+    display: flex;
+    gap: 1.25rem;
+    padding: 1.25rem 1.25rem 1.5rem;
+    background: #f0f6ff;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.detail-avatar {
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    color: white;
+    font-family: 'Poppins', sans-serif;
+    font-size: 17px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.detail-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.detail-name {
+    font-family: 'Poppins', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 2px;
+}
+
+.detail-title {
+    font-size: 13px;
+    color: #005596;
+    font-weight: 500;
+    margin-bottom: 0.875rem;
+}
+
+.detail-fields {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem 1.5rem;
+}
+
+.detail-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.detail-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #9ca3af;
+}
+
+.detail-value {
+    font-size: 14px;
+    color: #1a1a1a;
+}
+
+.detail-empty {
+    color: #9ca3af;
+    font-style: italic;
 }

@@ -15,7 +15,7 @@ app.get('/', (req, res) => {
 
 app.get('/api/consultants', (req, res) => {
     const consultants = db.prepare(`
-        SELECT id, name, city, role_type
+        SELECT id, name, city, state, role_type, title, phone
         FROM consultants
         ORDER BY substr(name, instr(name, ' ') + 1)
     `).all();
