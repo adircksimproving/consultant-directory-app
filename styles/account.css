@@ -38,3 +38,21 @@
     align-items: center;
     justify-content: center;
 }
+
+.btn-signout {
+    padding: 0.4rem 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    background: white;
+    font-size: 13px;
+    font-weight: 500;
+    color: #6b7280;
+    cursor: pointer;
+    font-family: inherit;
+    text-decoration: none;
+}
+
+.btn-signout:hover {
+    background: #f9fafb;
+    color: #374151;
+}
