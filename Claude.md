@@ -13,9 +13,9 @@ These three apps share a common auth layer (portal) and serve the same users (de
 
 | Repo | Local Path | Production URL | Role |
 |---|---|---|---|
-| `portal` | `~/Documents/projects/internal/portal-main` | https://portal-production-2c38.up.railway.app/ | Auth hub — login page and app dashboard |
-| `revenue-analysis-app` | `~/Documents/projects/internal/revenue-analysis-app-main` | https://revenue-analysis-app-production.up.railway.app/ | Project financial tracking and forecasting |
-| `consultant-directory-app` | `~/Documents/projects/internal/consultant-directory-app-main` | https://consultant-directory-app-production.up.railway.app/ | Consultant search and profile directory |
+| `portal` | `~/portal` | https://portal-production-2c38.up.railway.app/ | Auth hub — login, sessions, dashboard |
+| `revenue-analysis-app` | `~/revenue-analysis-app` | https://revenue-analysis-app-production.up.railway.app/ | Project financial tracking and forecasting |
+| `consultant-directory-app` | `~/consultant-directory-app` | https://consultant-directory-app-production.up.railway.app/ | Consultant search and profile directory |
 
 ### Load sibling repos in a session
 
@@ -30,9 +30,24 @@ claude --add-dir ~/Documents/projects/internal/consultant-directory-app-main \
 
 ### Cross-repo rules
 
-- Auth is owned by portal. Any login, session, or identity work must mirror the pattern portal establishes. The sign-out button and portal logo link use a `BASE_URL` variable in `home.html` — keep this pattern if updating navigation.
+- Auth is owned by portal. This app reads the `portal_sid` cookie from each request and resolves identity by calling portal's `/api/me`. Never validate credentials here.
 - Consultant name is the shared identity key between this app and `revenue-analysis-app`. Both apps have a `consultants` table with a `name` field. If you rename, reformat, or add identity fields here, check impact on `revenue-analysis-app/server/db.js` and flag it.
 - Do NOT modify files in sibling repos unless explicitly asked. If a change here requires follow-up elsewhere, say so: "Follow-up needed in [repo]: [what and where]."
+
+---
+
+## Auth integration
+
+`server/middleware/portalAuth.js` gates `/api/*` routes:
+1. Reads `portal_sid` cookie.
+2. Calls portal's `/api/me` (cached 60s).
+3. On 401: returns 401 JSON for `/api/*`; for HTML redirects to portal.
+
+The frontend in `home.html` redirects to `/auth/portal` (server-side 302 to portal) when `/api/consultants` returns 401.
+
+The directory currently has no per-user data — consultants are global and read-only. Auth is for access control only. If user-scoped data is added later, follow the pattern in `revenue-analysis-app`: stamp records with `req.userId` derived from a local `users` table keyed by `portal_user_id`.
+
+Required env var: `PORTAL_URL` (defaults to `http://localhost:3001` for dev).
 
 ---
 
@@ -92,10 +107,16 @@ The `db.js` migration logic adds missing columns (`title`, `phone`, `state`) if 
 
 ## API
 
-**`GET /api/consultants`**
-Returns all rows from `consultants`, sorted by `last_name`. No filtering, no pagination, no auth guard.
+**`GET /api/consultants`** (auth-required)
+Returns all rows from `consultants`, sorted by last name. No filtering, no pagination. Gated by portal session — returns 401 if `portal_sid` cookie is missing or invalid.
 
-This is the only API endpoint. All search and filter logic runs client-side in `home.html`.
+**`GET /api/me`** (auth-required)
+Returns the resolved portal user (`portal_user_id`, `username`, `is_admin`, impersonation status).
+
+**`GET /auth/portal`**
+Server-side 302 to the portal URL — used by the frontend to redirect on 401.
+
+All search and filter logic runs client-side in `home.html`.
 
 ---
 
@@ -108,13 +129,8 @@ Single HTML file, no module imports. Key behaviors:
 3. Row click toggles an inline detail card. Only one detail card open at a time. Re-filtering closes open cards.
 4. Avatar color is deterministic: a hash of the consultant's name maps to one of 8 colors — same name always gets the same color.
 
-**`BASE_URL` pattern for portal navigation:**
-```js
-const BASE_URL = window.location.hostname === 'localhost'
-  ? 'http://localhost:3001'
-  : 'https://portal-production-2c38.up.railway.app';
-```
-Portal logo and sign-out button use this. If portal's production URL changes, update this constant.
+**Portal navigation:**
+The portal URL is resolved server-side via `PORTAL_URL` env var. Frontend code redirects to `/auth/portal` (server 302) rather than constructing portal URLs in the browser. If portal's production URL changes, update only the env var.
 
 ---
 
@@ -143,17 +159,15 @@ Shared across all three apps — do not introduce new values without applying th
 ## Constraints
 
 - Do not add React, Vue, or any frontend framework. This is intentionally vanilla.
-- Do not add authentication middleware or session libraries speculatively. When auth is implemented, it will use Entra ID via portal — wait for that work to be scoped.
-- The `/api/consultants` endpoint has no auth guard by design (current state). Do not add per-endpoint auth patterns without coordinating the approach with portal first.
+- Auth is consumed from portal via `portal_sid` cookie + `/api/me`. Never validate credentials in this app. If the auth model changes, it changes in portal first.
 
 ---
 
 ## Known Issues / Gotchas
 
-- **No auth guard on the API.** Any request to `/api/consultants` returns all consultant data without authentication.
 - **Schema uses `name` as the unique key for consultants.** Duplicate names will fail silently on insert. If a real HR system integration is added, this needs an external ID field.
 - **All filtering is client-side.** Fine for the current dataset size; will need server-side filtering if the consultant count grows significantly.
-- **`server/index.js` has no error handling.** A bad DB state will return an unformatted 500.
+- **`server/index.js` has minimal error handling.** A bad DB state will return an unformatted 500.
 
 ---
 

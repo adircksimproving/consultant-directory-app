@@ -2,18 +2,26 @@ import express from 'express';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import db from './db.js';
+import { requirePortalAuth, PORTAL_URL } from './middleware/portalAuth.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 
 app.use(express.json());
-app.use(express.static(join(__dirname, '..')));
 
-app.get('/', (req, res) => {
-    res.redirect('/home.html');
+app.get('/auth/portal', (req, res) => res.redirect(PORTAL_URL));
+
+app.get('/api/me', requirePortalAuth, (req, res) => {
+    res.json({
+        portal_user_id: req.portalUser.id,
+        username: req.portalUser.username,
+        is_admin: req.portalUser.is_admin,
+        impersonating: req.portalUser.impersonating,
+        impersonator: req.portalUser.impersonator,
+    });
 });
 
-app.get('/api/consultants', (req, res) => {
+app.get('/api/consultants', requirePortalAuth, (req, res) => {
     const consultants = db.prepare(`
         SELECT id, name, city, state, role_type, title, phone
         FROM consultants
@@ -22,9 +30,13 @@ app.get('/api/consultants', (req, res) => {
     res.json(consultants);
 });
 
+app.use(express.static(join(__dirname, '..')));
+
+app.get('/', (req, res) => {
+    res.redirect('/home.html');
+});
+
 const PORT = process.env.PORT || 3002;
 app.listen(PORT, () => {
     console.log(`Directory running at http://localhost:${PORT}`);
 });
-
-

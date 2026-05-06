@@ -105,7 +105,9 @@
             locationSelect.innerHTML = '<option value="">All Locations</option>';
             titleSelect.innerHTML = '<option value="">All Titles</option>';
 
-            const consultants = await fetch('/api/consultants').then(r => r.json());
+            const res = await fetch('/api/consultants');
+            if (res.status === 401) { window.location.href = '/auth/portal'; return; }
+            const consultants = await res.json();
 
             const locations = [...new Set(consultants.map(c => `${c.city}, ${c.state}`))].sort();
             const titles = [...new Set(consultants.map(c => c.title))].sort();
