@@ -78,7 +78,10 @@ export async function handleCallback(req, res) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ token }),
         });
-        if (!exchange.ok) return res.redirect('/auth/portal');
+        if (!exchange.ok) {
+            console.error('Token exchange failed:', exchange.status, await exchange.text().catch(() => ''));
+            return res.status(502).send('Auth failed — <a href="/auth/portal">try again</a>');
+        }
         portalUser = await exchange.json();
     } catch (err) {
         console.error('Token exchange failed:', err.message);
