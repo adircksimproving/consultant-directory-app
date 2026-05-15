@@ -52,11 +52,13 @@
     </div>
 
     <script>
-        const PORTAL_BASE = window.location.hostname === 'localhost'
-            ? 'http://localhost:3001'
-            : 'https://portal-production-2c38.up.railway.app';
-        document.getElementById('nav-logo-link').href = PORTAL_BASE + '/portal';
-        document.getElementById('nav-signout-link').href = PORTAL_BASE + '/';
+        let PORTAL_BASE = 'http://localhost:3001';
+
+        async function loadConfig() {
+            const res = await fetch('/api/config');
+            const config = await res.json();
+            PORTAL_BASE = config.portalUrl;
+        }
 
         let activeRow = null;
         let rowIndex = [];
@@ -197,7 +199,14 @@
             }
         });
 
-        loadConsultants();
+        async function init() {
+            await loadConfig();
+            document.getElementById('nav-logo-link').href = PORTAL_BASE + '/portal';
+            document.getElementById('nav-signout-link').href = PORTAL_BASE + '/';
+            await loadConsultants();
+        }
+
+        init();
     </script>
 </body>
 </html>

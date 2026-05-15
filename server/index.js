@@ -9,6 +9,12 @@ const app = express();
 
 app.use(express.json());
 
+app.get('/api/config', (req, res) => {
+    res.json({
+        portalUrl: process.env.PORTAL_URL || 'http://localhost:3001'
+    });
+});
+
 app.get('/auth/portal', startHandoff);
 app.get('/auth/callback', handleCallback);
 app.get('/auth/logout', handleLogout);
